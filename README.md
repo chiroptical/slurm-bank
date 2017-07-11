@@ -49,7 +49,8 @@ service units.
 # Prerequisites
 
 - Python: Should work with 2 or 3 (submit issue if I need to make anything more
-  generic), default python on RHEL 7 is still 2.7.5.  Specific packages:
+  generic), script runs on a RHEL 6 machine which is still Python 2.6 (hence `os.popen` instead of `subprocess`).
+  Specific packages:
     - [dataset](https://dataset.readthedocs.io/en/latest/): "databases for lazy
       people"
     - [docopt](http://docopt.org): "command line arguments parser, that will
