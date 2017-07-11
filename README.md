@@ -93,14 +93,15 @@ sacctmgr add account barrymoo description="<email>" cluster=<cluster/s>
 
 ## Charging
 
-We use a MAX(CPU, Memory) charging scheme (`PriorityFlags=MAX_TRES`). For each
+We use a MAX(CPU, Memory, GPU) charging scheme (`PriorityFlags=MAX_TRES`). For each
 cluster, we define `DefMemPerCPU=<RAM in Mb> / <cores per node>` (choose lowest
 value on each cluster). Then:
 - CPU Only Node: `TresBillingWeights="CPU=1.0,Mem=<value>G"` where `<value> = 1
-  / DefMemPerCPU`
+  / (DefMemPerCPU / 1024)`
 - GPU Node: `TresBillingWeights="CPU=0.0,Mem=0.0G,GRES/gpu=1.0"`
 Here, `CPU=1.0` means 1 service unit per hour to use 1 core and `GRES/gpu=1.0`
-means 1 service unit per hour to use 1 GPU card.
+means 1 service unit per hour to use 1 GPU card. `Mem=<value>G` is defined such
+that for one hour using the default RAM users are charged 1 service unit.
 
 
 # Necessary Modifications
