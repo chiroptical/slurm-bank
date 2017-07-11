@@ -1,6 +1,17 @@
 A Banking and Proposal System For Slurm
 ---
 
+# Table of Contents
+1. [Why?](#why)
+2. [How?](#how)
+3. [Prerequisites](#prerequisites)
+4. [Slurm Setup](#slurm-setup)
+   1. [Accounts](#accounts)
+   2. [Associations](#associations)
+   3. [Charging](#charging)
+5. [Necessary Modifications](#necessary-modifications)
+6. [Checking and Notifications](#checking-and-notifications)
+
 # Why?
 
 The Slurm association based limits didn't provide enough power for our group's
