@@ -50,9 +50,9 @@ service units.
 
 - Python: Should work with 2 or 3 (submit issue if I need to make anything more
   generic), default python on RHEL 7 is still 2.7.5.  Specific packages:
-    - (dataset)[https://dataset.readthedocs.io/en/latest/]: "databases for lazy
+    - [dataset](https://dataset.readthedocs.io/en/latest/): "databases for lazy
       people"
-    - (docopt)[http://docopt.org]: "command line arguments parser, that will
+    - (http://docopt.org)[docopt]: "command line arguments parser, that will
       make you smile"
 - Slurm: I am using 16.05.6, but I imagine most of the queries should work for
   older, and newer, versions.
