@@ -52,7 +52,7 @@ service units.
   generic), default python on RHEL 7 is still 2.7.5.  Specific packages:
     - [dataset](https://dataset.readthedocs.io/en/latest/): "databases for lazy
       people"
-    - (http://docopt.org)[docopt]: "command line arguments parser, that will
+    - [docopt](http://docopt.org): "command line arguments parser, that will
       make you smile"
 - Slurm: I am using 16.05.6, but I imagine most of the queries should work for
   older, and newer, versions.
