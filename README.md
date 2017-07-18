@@ -23,7 +23,7 @@ everyone, but it is the model we chose.
 # How?
 
 Using the existing associations in your Slurm database, we use the "RawUsage"
-from `sshare` to monitor service units on the cluster. From the documentation:
+from `sshare` to monitor service units (CPU hours) on the cluster. From the documentation:
 
 ``` text
 Raw Usage
@@ -47,10 +47,10 @@ PriorityDecayHalfLife=0-00:00:00
 PriorityUsageResetPeriod=NONE
 ```
 
-The `crc-bank.py` takes care of resetting "RawUsage" for you. This bank enforces
+The `crc-bank.py` takes care of resetting "RawUsage" for you. The bank enforces
 two limits:
 
-1. A service unit limit: How many compute hours is an account (group) allowed
+1. A service unit limit: How many compute hours is an account allowed
    to use?
 2. A data limit: How long does the proposal last?
 
@@ -68,6 +68,7 @@ service units.
       make you smile"
 - Slurm: I am using 16.05.6, but I imagine most of the queries should work for
   older, and newer, versions.
+- SMTP: A working SMTP server to send emails via `smtplib` in python.
 
 # Slurm Setup
 
@@ -96,7 +97,8 @@ sacctmgr update account where account=barrymoo set description="<email>"
 If you have multiple Slurm clusters, this tool was designed to provide a single
 bank account for all of them. Obviously, you can modify the script to enforce
 them separately or use multiple versions. Typically, when I add an account I
-define all of the clusters explicitly.
+define all of the clusters explicitly (we have some clusters which their is
+no enforcement).
 
 ``` bash
 sacctmgr add account barrymoo description="<email>" cluster=<cluster/s>
@@ -105,7 +107,7 @@ sacctmgr add account barrymoo description="<email>" cluster=<cluster/s>
 ## Charging
 
 We use a MAX(CPU, Memory, GPU) charging scheme (`PriorityFlags=MAX_TRES`). For each
-cluster, we define `DefMemPerCPU=<RAM in Mb> / <cores per node>` (choose lowest
+cluster, we define `DefMemPerCPU=<RAM in Mb> / <cores per node>` (choosing lowest
 value on each cluster). Then:
 - CPU Only Node: `TresBillingWeights="CPU=1.0,Mem=<value>G"` where `<value> = 1
   / (DefMemPerCPU / 1024)`
