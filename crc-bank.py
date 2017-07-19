@@ -111,7 +111,7 @@ if arguments['insert']:
 
     # Insert the limit
     table.insert(dict(account=arguments['<account>'], su_limit_hrs=service_units,
-                 date=date.today(), percent_informed=False, limit_informed=False))
+                 date=date.today(), percent_informed=False, half_percent_informed=False, limit_informed=False))
 
     # Log the action
     log_action("Account: {0} Insert: {1}".format(arguments['<account>'], service_units))
@@ -125,7 +125,7 @@ elif arguments['modify']:
 
     # Modify the limit
     table.update(dict(account=arguments['<account>'], su_limit_hrs=service_units,
-                 date=date.today(), percent_informed=False, limit_informed=False), ['account'])
+                 date=date.today(), percent_informed=False, half_percent_informed=False, limit_informed=False), ['account'])
 
     # Log the action
     log_action("Account: {0} Modify: {1}".format(arguments['<account>'], service_units))
@@ -140,7 +140,7 @@ elif arguments['add']:
 
     # Modify the limit, but not the date
     table.update(dict(account=arguments['<account>'], su_limit_hrs=service_units,
-                 percent_informed=False, limit_informed=False), ['account'])
+                 percent_informed=False, half_percent_informed=False, limit_informed=False), ['account'])
 
     # Log the action
     log_action("Account: {0} Add, New Limit: {1}".format(arguments['<account>'], service_units))
@@ -251,6 +251,43 @@ elif arguments['check_service_units_limit']:
             table.update(dict(account=arguments['<account>'], percent_informed=True),
                         ['account'])
 
+    elif limit != -1 and percent >= 50:
+        informed = table.find_one(account=arguments['<account>'])['half_percent_informed']
+        if not informed:
+            # Account is close to limit, inform PI
+            email_text = '''To Whom it May Concern,
+
+            Your allocation on MODIFY is at {0}% usage. The one-year allocation started on {1}.
+
+            Thanks,
+
+            The Proposal Bot
+            '''
+
+            # Send PI an email
+            From = "proposal_bot@MODIFY"
+            command = "sacctmgr -n list account account={0} format=description"
+            pittusername = popen(command.format(arguments['<account>'])).read().strip()
+            To = "{0}@MODIFY".format(pittusername)
+
+            begin_date = table.find_one(account=arguments['<account>'])['date']
+
+            email = MIMEText(email_text.format(percent, begin_date))
+
+            email["Subject"] = "Your allocation on MODIFY"
+            email["From"] = From
+            email["To"] = To
+
+            # Send the message via our own SMTP server, but don't include the
+            # envelope header.
+            s = smtplib.SMTP('localhost')
+            s.sendmail(From, [To], email.as_string())
+            s.quit()
+
+            # PI has been informed
+            table.update(dict(account=arguments['<account>'], half_percent_informed=True),
+                        ['account'])
+
 elif arguments['reset_usage']:
     # Check if database item exists
     check_item_in_table(table, arguments['<account>'], 'reset_usage')
@@ -261,7 +298,7 @@ elif arguments['reset_usage']:
         popen(command.format(arguments['<account>'], cluster))
 
     # Update the date in the database
-    table.update(dict(account=arguments['<account>'], date=date.today(), percent_informed=False, limit_informed=False), ['account'])
+    table.update(dict(account=arguments['<account>'], date=date.today(), percent_informed=False, half_percent_informed=False, limit_informed=False), ['account'])
 
     # Log the action
     log_action("Account: {0} Reset".format(arguments['<account>']))

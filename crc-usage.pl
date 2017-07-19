@@ -1,6 +1,32 @@
 #!/usr/bin/env perl
 use strict;
 use warnings;
+use POSIX;
+use Term::Size;
+
+# Print centered subroutine
+sub print_centered {
+    my ($string, $width, $char) = @_;
+    my $width_of_string = length($string);
+    my $adjusted = ceil($width / 2) - ceil($width_of_string / 2);
+    if ($adjusted % 2 != 0) {
+        $adjusted -= 1;
+    }
+    my $formatted = $char x $adjusted . " " . $string . " " . $char x $adjusted;
+    if (length($formatted) < $width) {
+        my $fix = $formatted . $char x ($width - length($formatted));
+    }
+    elsif (length($formatted) > $width) {
+        $formatted = substr($formatted, 0, -(length($formatted) - $width));
+    }
+    return $formatted . "\n";
+}
+
+# Need the terminal size
+my ($width, $height) = Term::Size::chars *STDOUT{IO};
+if (not $width) {
+    $width = 140;
+}
 
 # Need a begin and end dates, choose the whole year
 my $year = `date +%y`;
@@ -35,32 +61,43 @@ else {
 }
 
 if (length($account) != 0) {
-    my @clusters = qw( cluster );
-    foreach my $cluster (@clusters) {
-        # Get SUs from crc-bank.py
-        my $line = `/absolute/path/to/crc-sus.py $account`;
-        my @sp = split(' ', $line);
-        my $sus = $sp[5];
+    # Get SUs from crc-bank.py
+    my $line = `/absolute/path/crc-sus.py $account`;
+    my @sp = split(' ', $line);
+    my $sus = $sp[5];
 
-        # Print Header
-        print('-' x 61 . "\n");
-        printf("Cluster: %52s\n", $cluster);
-        printf("Total SUs: %50i\n", $sus);
-        print('-' x 61 . "\n");
+    # Make everything fit on screen nicely
+    my $fourth_term_size = int($width / 4) - 1;
+    my $adjusted_width = $fourth_term_size * 4 + 3;
 
-        if ($sus == 0) {
-            print("Your account has no SUs on this cluster\n");
-        }
-        elsif ( $sus == -1 ) {
-            print("Your account has unlimited SUs on this cluster\n");
-        }
-        else {
+    # Welcome Message
+    print('=' x $adjusted_width . "\n");
+    print(print_centered("MODIFY Service Unit Usage", $adjusted_width, '-'));
+    print('=' x $adjusted_width . "\n");
+
+    # Print Total SUs
+    print('-' x $adjusted_width . "\n");
+    printf("Total SUs: %${\($adjusted_width - 11)}i\n", $sus);
+    print('-' x $adjusted_width . "\n");
+
+    if ($sus == 0) {
+        print(print_centered("Your account has no SUs on this cluster", $adjusted_width, ' '));
+        print('-' x $adjusted_width . "\n");
+    }
+    elsif ( $sus == -1 ) {
+        print(print_centered("Your account has unlimited SUs on this cluster", $adjusted_width, ' '));
+        print('-' x $adjusted_width . "\n");
+    }
+    else {
+        my @clusters = qw( MODIFY ); # e.g. qw( clus1 clus2 )
+        foreach my $cluster (@clusters) {
+            printf("Cluster: %${\($adjusted_width - 9)}s\n", $cluster);
+            print('-' x $adjusted_width . "\n");
+
             my @usage = `sshare --all --noheader --format=account%30,user%30,rawusage%30 --accounts=$account --cluster=$cluster`;
 
-            printf("%30s%3s: %30i\n", "Total SUs (CPU Hours) on ", $cluster, $sus);
-            print('-' x 61 . "\n");
-            printf("%30s %30s %30s %30s\n", "Account", "User", "SUs (CPU Hours)", "Percent of Total SUs");
-            printf("%30s %30s %30s %30s\n", '-' x 30, '-' x 30, '-' x 30, '-' x 30);
+            printf("%${\($fourth_term_size)}s %${\($fourth_term_size)}s %${\($fourth_term_size)}s %${\($fourth_term_size)}s\n", "Account", "User", "SUs (CPU Hours)", "Percent of Total");
+            printf("%${\($fourth_term_size)}s %${\($fourth_term_size)}s %$    {\($fourth_term_size)}s %${\($fourth_term_size)}s\n", '-' x $fourth_term_size, '-' x $fourth_term_size, '-' x $fourth_term_size, '-' x $fourth_term_size);
 
             # Loop over usage lines, replace cpu seconds with cpu hours
             # -> with Slurm Clusters you need to start on second line
@@ -73,10 +110,11 @@ if (length($account) != 0) {
                     splice(@sp, 1, 0, '');
                 }
                 # Print out the strings, SUs, and Percent of Total
-                printf("%30s " x $#sp, @sp[0 .. $#sp - 1]);
-                printf("%30i", $sp[-1]);
-                printf("%30.4f\n", 100 * $sp[-1] / $sus);
+                printf("%${\($fourth_term_size)}s " x $#sp, @sp[0 .. $#sp - 1]);
+                printf("%${\($fourth_term_size)}i ", $sp[-1]);
+                printf("%${\($fourth_term_size)}.4f\n", 100 * $sp[-1] / $sus);
             }
+            print('-' x $adjusted_width . "\n");
         }
     }
 }
